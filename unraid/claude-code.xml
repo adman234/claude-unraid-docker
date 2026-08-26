@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>claude-code</Name>
+  <Repository>ghcr.io/adman234/claude-unraid-docker:latest</Repository>
+  <Registry>https://github.com/adman234/claude-unraid-docker/pkgs/container/claude-unraid-docker</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/adman234/claude-unraid-docker/issues</Support>
+  <Project>https://github.com/adman234/claude-unraid-docker</Project>
+  <Overview>
+    Anthropic's Claude Code CLI, running as a persistent toolbox container on Unraid.
+
+    Unraid rebuilds its root filesystem from scratch on every boot, so anything installed with npm on the host disappears at reboot. This container keeps Claude Code and — importantly — your login installed permanently.
+
+    Start it, then click the container's console button (or run: docker exec -it claude-code claude-code) and type `claude`. Your authentication and settings are stored in appdata and survive restarts, updates and reboots.
+
+    Mounted host paths are readable and writable directly — no filesystem MCP server required. Files are created as nobody:users (99:100) by default so they behave like every other file on your array.
+
+    WARNING: by default this container mounts /mnt/user read-write, giving Claude Code access to all of your user shares. Adjust the mounts below to narrow that if you prefer.
+  </Overview>
+  <Category>Tools: Productivity: Other:</Category>
+  <WebUI/>
+  <TemplateURL>https://raw.githubusercontent.com/adman234/claude-unraid-docker/main/unraid/claude-code.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/adman234/claude-unraid-docker/main/unraid/claude-code.png</Icon>
+  <ExtraParams>--init --stop-timeout 10</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+
+  <Config Name="Appdata (login + settings)"
+          Target="/home/claude"
+          Default="/mnt/user/appdata/claude-code"
+          Mode="rw"
+          Description="Persistent home directory. Your Claude Code login lives here — without it you would have to re-authenticate every restart. Do not remove."
+          Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/claude-code</Config>
+
+  <Config Name="Workspace"
+          Target="/workspace"
+          Default="/mnt/user/claude-workspace"
+          Mode="rw"
+          Description="Default working directory. Claude Code starts here when you open a shell."
+          Type="Path" Display="always" Required="true" Mask="false">/mnt/user/claude-workspace</Config>
+
+  <Config Name="User shares"
+          Target="/mnt/user"
+          Default="/mnt/user"
+          Mode="rw"
+          Description="Your array, mounted at the same path it has on the host so /mnt/user/... paths work verbatim. WARNING: this grants read/write access to ALL user shares. To restrict access, change this to a single share (e.g. /mnt/user/media) on both sides, or set the mode to ro."
+          Type="Path" Display="always" Required="false" Mask="false">/mnt/user</Config>
+
+  <Config Name="PUID"
+          Target="PUID"
+          Default="99"
+          Mode=""
+          Description="User ID files are created as. 99 (nobody) is the Unraid default — leave it unless you know you need something else."
+          Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+
+  <Config Name="PGID"
+          Target="PGID"
+          Default="100"
+          Mode=""
+          Description="Group ID files are created as. 100 (users) is the Unraid default."
+          Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+
+  <Config Name="UMASK"
+          Target="UMASK"
+          Default="022"
+          Mode=""
+          Description="File creation mask. Use 000 if you want group/other write access on everything Claude creates."
+          Type="Variable" Display="advanced" Required="false" Mask="false">022</Config>
+
+  <Config Name="TZ"
+          Target="TZ"
+          Default="America/New_York"
+          Mode=""
+          Description="Timezone, e.g. Europe/London. Keeps timestamps and Claude's sense of 'today' correct."
+          Type="Variable" Display="always" Required="false" Mask="false"></Config>
+
+  <Config Name="ANTHROPIC_API_KEY"
+          Target="ANTHROPIC_API_KEY"
+          Default=""
+          Mode=""
+          Description="Optional. Leave EMPTY to sign in interactively with /login using your Claude subscription (recommended). Only set this if you want to bill usage to an Anthropic Console API key instead."
+          Type="Variable" Display="always" Required="false" Mask="true"></Config>
+
+  <Config Name="Update on start"
+          Target="CLAUDE_UPDATE_ON_START"
+          Default="false"
+          Mode=""
+          Description="Set to true to npm-update Claude Code on every container start. Off by default — the image ships a recent version, and enabling this makes startup depend on npm being reachable. The normal update path is pulling a newer image."
+          Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+
+  <Config Name="Run as root"
+          Target="RUN_AS_ROOT"
+          Default="false"
+          Mode=""
+          Description="Set to true to skip dropping privileges and run everything as root. Files Claude creates will be root-owned, which other containers usually cannot write. Only enable if you hit a permission problem you cannot solve with PUID/PGID."
+          Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+
+  <Config Name="Individual disks"
+          Target="/mnt/disks"
+          Default=""
+          Mode="rw"
+          Description="Optional. Unassigned Devices mounts, if you want Claude Code to reach them."
+          Type="Path" Display="advanced" Required="false" Mask="false"></Config>
+
+  <Config Name="Docker socket"
+          Target="/var/run/docker.sock"
+          Default=""
+          Mode="ro"
+          Description="Optional. Lets Claude Code inspect your other containers. WARNING: access to the Docker socket is equivalent to root on the host — anything that can talk to it can take over the server. Read-only (ro) limits it to inspection. Leave blank unless you specifically want this."
+          Type="Path" Display="advanced" Required="false" Mask="false"></Config>
+</Container>

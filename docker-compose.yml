@@ -1,0 +1,67 @@
+# Claude Code on Unraid -- Docker Compose Manager stack.
+#
+# Paste this into Docker Compose Manager as a new stack named "claude-code",
+# then Compose Up. See README.md for the point-and-click template alternative.
+
+services:
+  claude-code:
+    image: ghcr.io/adman234/claude-unraid-docker:latest
+    # To build locally instead of pulling, comment out `image:` above and
+    # uncomment the two lines below (requires the repo checked out on the host):
+    # build:
+    #   context: .
+    container_name: claude-code
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    init: true
+
+    environment:
+      # Match Unraid's nobody:users so files Claude writes look like every
+      # other file on your array.
+      - PUID=99
+      - PGID=100
+      - UMASK=022
+      - TZ=America/New_York
+
+      # Optional: authenticate with an API key instead of running /login.
+      # Leave unset to use interactive OAuth login (recommended).
+      # - ANTHROPIC_API_KEY=sk-ant-...
+
+      # Optional: npm-update Claude Code on every container start. Off by
+      # default -- the image already ships a recent version and this makes
+      # startup depend on npm being reachable.
+      - CLAUDE_UPDATE_ON_START=false
+
+      # Optional escape hatch: run everything as root instead of PUID/PGID.
+      # - RUN_AS_ROOT=true
+
+    volumes:
+      # Persistent home. This is the important one: your login lives in
+      # ~/.claude.json, so without this you re-authenticate on every restart.
+      - /mnt/user/appdata/claude-code:/home/claude:rw
+
+      # Default working directory for projects.
+      - /mnt/user/claude-workspace:/workspace:rw
+
+      # Your array, mounted at the SAME path it has on the host, so the paths
+      # you already know work verbatim inside the container.
+      #
+      # WARNING: this gives Claude Code read/write access to every user share.
+      # To narrow it, delete this line and mount only what you want, e.g.:
+      #   - /mnt/user/media:/mnt/user/media:rw
+      #   - /mnt/user/downloads:/mnt/user/downloads:ro
+      - /mnt/user:/mnt/user:rw
+
+      # Optional: individual disks and unassigned devices.
+      # - /mnt/disks:/mnt/disks:rw
+      # - /mnt/cache:/mnt/cache:rw
+
+      # Optional: let Claude Code manage your other containers.
+      # WARNING: the Docker socket is root-equivalent access to the host.
+      # Only add this if you understand that. Read-only still allows plenty.
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    labels:
+      - "com.unraid.docker.managed=composeman"
+      - "com.unraid.docker.icon=https://raw.githubusercontent.com/adman234/claude-unraid-docker/main/unraid/claude-code.png"

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Launches Claude Code as the unprivileged user no matter how you got a shell.
+#
+# `docker exec` bypasses the entrypoint and lands you as root, which would make
+# every file Claude writes root-owned on your array. This wrapper corrects that
+# while keeping the container's environment (ANTHROPIC_API_KEY, TERM, proxy
+# vars) intact.
+set -euo pipefail
+
+CLAUDE_USER="${CLAUDE_USER:-claude}"
+RUN_AS_ROOT="${RUN_AS_ROOT:-false}"
+
+case "${RUN_AS_ROOT}" in
+    [Tt][Rr][Uu][Ee]|1|[Yy][Ee][Ss]) exec claude "$@" ;;
+esac
+
+if [ "$(id -u)" = "0" ] && id -u "${CLAUDE_USER}" >/dev/null 2>&1; then
+    export HOME="/home/${CLAUDE_USER}"
+    export USER="${CLAUDE_USER}"
+    export TERM="${TERM:-xterm-256color}"
+    exec gosu "${CLAUDE_USER}" claude "$@"
+fi
+
+exec claude "$@"

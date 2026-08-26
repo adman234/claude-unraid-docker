@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# In-place update, useful between image pulls. Lost when the container is
+# recreated -- the durable update path is pulling a newer image.
+set -euo pipefail
+
+if [ "$(id -u)" != "0" ]; then
+    echo "claude-update must run as root:" >&2
+    echo "  docker exec -u 0 -it \"\$(hostname)\" claude-update" >&2
+    exit 1
+fi
+
+echo "current: $(claude --version 2>/dev/null || echo unknown)"
+npm install -g @anthropic-ai/claude-code@latest
+echo "updated: $(claude --version 2>/dev/null || echo unknown)"
+echo
+echo "Note: this lasts until the container is recreated. To make it stick,"
+echo "pull a newer image from the Unraid Docker tab instead."
