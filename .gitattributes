@@ -1,5 +1,12 @@
+# Shell scripts and the Dockerfile run inside a Linux container. If they ever
+# reach a build with CRLF line endings the shebang breaks at runtime with
+# "bad interpreter: /bin/bash^M", which is an unpleasant thing to debug.
+# Force LF everywhere, regardless of the contributor's platform or autocrlf.
 * text=auto eol=lf
+
+# Extensionless executables that the pattern above can't infer from a suffix.
 scripts/claude-code   text eol=lf
 scripts/claude-update text eol=lf
 Dockerfile            text eol=lf
+
 *.png binary
